@@ -1,0 +1,8 @@
+{
+  "name": "বিসমিল্লাহ এন্টারপ্রাইজ — হালখাতা",
+  "description": "দোকানের হালখাতা, কাস্টমারের বকেয়া ও নগদ/ব্যাংক জমার হিসাব, খাতার ছবি স্ক্যান এবং A4 PDF প্রিন্ট সিস্টেম।",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

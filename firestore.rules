@@ -1,0 +1,192 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reusable Hardened Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function isShopOwner(shopId) {
+      return isSignedIn() && request.auth.uid == shopId;
+    }
+
+    // Validation Blueprints
+    function isValidShop(data) {
+      return data.keys().hasAll([
+        'ownerId', 'shopName', 'shopAddress', 'shopPhone',
+        'activeHalkhataId', 'numeralFormat', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'shopName', 'shopAddress', 'shopPhone',
+        'activeHalkhataId', 'numeralFormat', 'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid
+      && data.shopName is string && data.shopName.size() >= 1 && data.shopName.size() <= 120
+      && data.shopAddress is string && data.shopAddress.size() <= 200
+      && data.shopPhone is string && data.shopPhone.size() <= 30
+      && data.activeHalkhataId is string && data.activeHalkhataId.size() <= 128
+      && data.numeralFormat is string && (data.numeralFormat == 'bn' || data.numeralFormat == 'en')
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidHalkhata(data) {
+      return data.keys().hasAll([
+        'ownerId', 'title', 'dateLabel', 'status', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'title', 'dateLabel', 'status', 'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid
+      && data.title is string && data.title.size() >= 1 && data.title.size() <= 120
+      && data.dateLabel is string && data.dateLabel.size() >= 1 && data.dateLabel.size() <= 40
+      && data.status is string && (data.status == 'active' || data.status == 'closed')
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidCustomer(data) {
+      return data.keys().hasAll([
+        'ownerId', 'serialNo', 'pageNo', 'name', 'address', 'mobile',
+        'totalDue', 'cashPaid', 'bankPaid', 'notes', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'serialNo', 'pageNo', 'name', 'address', 'mobile',
+        'totalDue', 'cashPaid', 'bankPaid', 'notes', 'createdAt', 'updatedAt'
+      ])
+      && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid
+      && data.serialNo is int && data.serialNo >= 1 && data.serialNo <= 1000000
+      && data.pageNo is string && data.pageNo.size() <= 30
+      && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+      && data.address is string && data.address.size() <= 120
+      && data.mobile is string && data.mobile.size() <= 30
+      && data.totalDue is number && data.totalDue >= 0 && data.totalDue <= 1000000000
+      && data.cashPaid is number && data.cashPaid >= 0 && data.cashPaid <= 1000000000
+      && data.bankPaid is number && data.bankPaid >= 0 && data.bankPaid <= 1000000000
+      && data.notes is string && data.notes.size() <= 300
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll([
+        'ownerId', 'customerId', 'customerName', 'type', 'amount', 'dateStr', 'note', 'createdAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId', 'customerId', 'customerName', 'type', 'amount', 'dateStr', 'note', 'createdAt'
+      ])
+      && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == request.auth.uid
+      && data.customerId is string && isValidId(data.customerId)
+      && data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 120
+      && data.type is string && (data.type == 'cash' || data.type == 'bank' || data.type == 'due_added')
+      && data.amount is number && data.amount > 0 && data.amount <= 1000000000
+      && data.dateStr is string && data.dateStr.size() >= 1 && data.dateStr.size() <= 40
+      && data.note is string && data.note.size() <= 200
+      && data.createdAt is timestamp;
+    }
+
+    // Master Gate Helpers
+    function shopOwned(shopId) {
+      return exists(/databases/$(database)/documents/shops/$(shopId))
+        && get(/databases/$(database)/documents/shops/$(shopId)).data.ownerId == request.auth.uid;
+    }
+
+    function halkhataActive(shopId, halkhataId) {
+      return exists(/databases/$(database)/documents/shops/$(shopId)/halkhatas/$(halkhataId))
+        && get(/databases/$(database)/documents/shops/$(shopId)/halkhatas/$(halkhataId)).data.ownerId == request.auth.uid
+        && get(/databases/$(database)/documents/shops/$(shopId)/halkhatas/$(halkhataId)).data.status == 'active';
+    }
+
+    // /shops/{shopId}
+    match /shops/{shopId} {
+      allow get: if isValidId(shopId) && isShopOwner(shopId);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isValidId(shopId) && isShopOwner(shopId)
+        && isValidShop(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(shopId) && isShopOwner(shopId)
+        && isValidShop(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['shopName', 'shopAddress', 'shopPhone', 'numeralFormat', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['activeHalkhataId', 'updatedAt'])
+        );
+      allow delete: if false;
+
+      // /shops/{shopId}/halkhatas/{halkhataId}
+      match /halkhatas/{halkhataId} {
+        allow get: if isValidId(shopId) && isValidId(halkhataId) && isShopOwner(shopId);
+        allow list: if isShopOwner(shopId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(shopId) && isValidId(halkhataId) && isShopOwner(shopId)
+          && isValidHalkhata(incoming())
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && shopOwned(shopId);
+        allow update: if isValidId(shopId) && isValidId(halkhataId) && isShopOwner(shopId)
+          && isValidHalkhata(incoming())
+          && existing().status == 'active'
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['title', 'dateLabel', 'updatedAt'])
+            || (incoming().status == 'closed' && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+          );
+        allow delete: if false;
+
+        // /shops/{shopId}/halkhatas/{halkhataId}/customers/{customerId}
+        match /customers/{customerId} {
+          allow get: if isValidId(shopId) && isValidId(halkhataId) && isValidId(customerId) && isShopOwner(shopId);
+          allow list: if isShopOwner(shopId) && resource.data.ownerId == request.auth.uid;
+          allow create: if isValidId(shopId) && isValidId(halkhataId) && isValidId(customerId) && isShopOwner(shopId)
+            && isValidCustomer(incoming())
+            && incoming().createdAt == request.time
+            && incoming().updatedAt == request.time
+            && halkhataActive(shopId, halkhataId);
+          allow update: if isValidId(shopId) && isValidId(halkhataId) && isValidId(customerId) && isShopOwner(shopId)
+            && isValidCustomer(incoming())
+            && incoming().ownerId == existing().ownerId
+            && incoming().createdAt == existing().createdAt
+            && incoming().updatedAt == request.time
+            && halkhataActive(shopId, halkhataId)
+            && (
+              incoming().diff(existing()).affectedKeys().hasOnly(['serialNo', 'pageNo', 'name', 'address', 'mobile', 'totalDue', 'cashPaid', 'bankPaid', 'notes', 'updatedAt'])
+              || incoming().diff(existing()).affectedKeys().hasOnly(['cashPaid', 'bankPaid', 'totalDue', 'updatedAt'])
+            );
+          allow delete: if isValidId(shopId) && isValidId(halkhataId) && isValidId(customerId)
+            && isShopOwner(shopId) && halkhataActive(shopId, halkhataId);
+        }
+
+        // /shops/{shopId}/halkhatas/{halkhataId}/transactions/{txId}
+        match /transactions/{txId} {
+          allow get: if isValidId(shopId) && isValidId(halkhataId) && isValidId(txId) && isShopOwner(shopId);
+          allow list: if isShopOwner(shopId) && resource.data.ownerId == request.auth.uid;
+          allow create: if isValidId(shopId) && isValidId(halkhataId) && isValidId(txId) && isShopOwner(shopId)
+            && isValidTransaction(incoming())
+            && incoming().createdAt == request.time
+            && halkhataActive(shopId, halkhataId)
+            && existsAfter(/databases/$(database)/documents/shops/$(shopId)/halkhatas/$(halkhataId)/customers/$(incoming().customerId));
+          allow update: if false;
+          allow delete: if isValidId(shopId) && isValidId(halkhataId) && isValidId(txId)
+            && isShopOwner(shopId) && halkhataActive(shopId, halkhataId);
+        }
+      }
+    }
+  }
+}

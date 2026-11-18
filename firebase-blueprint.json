@@ -1,0 +1,247 @@
+{
+  "entities": {
+    "Shop": {
+      "title": "Shop",
+      "description": "Shop profile and active Halkhata configuration for a merchant.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "shopName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "shopAddress": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 200
+        },
+        "shopPhone": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 30
+        },
+        "activeHalkhataId": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 128
+        },
+        "numeralFormat": {
+          "type": "string",
+          "enum": ["bn", "en"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "shopName",
+        "shopAddress",
+        "shopPhone",
+        "activeHalkhataId",
+        "numeralFormat",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Halkhata": {
+      "title": "Halkhata",
+      "description": "A seasonal/annual Halkhata ledger book session.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "dateLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "closed"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "title",
+        "dateLabel",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "A customer entry in a Halkhata ledger sheet.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "serialNo": {
+          "type": "integer"
+        },
+        "pageNo": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 30
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "address": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 120
+        },
+        "mobile": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 30
+        },
+        "totalDue": {
+          "type": "number"
+        },
+        "cashPaid": {
+          "type": "number"
+        },
+        "bankPaid": {
+          "type": "number"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 300
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "serialNo",
+        "pageNo",
+        "name",
+        "address",
+        "mobile",
+        "totalDue",
+        "cashPaid",
+        "bankPaid",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Date-stamped cash, bank, or due-addition entry for a customer.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "customerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "customerName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "type": {
+          "type": "string",
+          "enum": ["cash", "bank", "due_added"]
+        },
+        "amount": {
+          "type": "number"
+        },
+        "dateStr": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "note": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 200
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "customerId",
+        "customerName",
+        "type",
+        "amount",
+        "dateStr",
+        "note",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/shops/{shopId}": {
+      "schema": { "$ref": "#/entities/Shop" },
+      "description": "Shop profile owned exclusively by the authenticated merchant (shopId == uid)."
+    },
+    "/shops/{shopId}/halkhatas/{halkhataId}": {
+      "schema": { "$ref": "#/entities/Halkhata" },
+      "description": "Halkhata ledger sessions belonging to a shop."
+    },
+    "/shops/{shopId}/halkhatas/{halkhataId}/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/Customer" },
+      "description": "Customer ledger rows within a Halkhata session."
+    },
+    "/shops/{shopId}/halkhatas/{halkhataId}/transactions/{txId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "Payment and due-addition history within a Halkhata session."
+    }
+  }
+}

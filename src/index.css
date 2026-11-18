@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: "Noto Sans Bengali", "Hind Siliguri", system-ui, -apple-system, sans-serif;
+  }
+
+  .font-display-bn {
+    font-family: "Tiro Bangla", "Noto Sans Bengali", "Hind Siliguri", serif;
+  }
+
+  .font-mono-num {
+    font-family: "Noto Sans Bengali", "Hind Siliguri", system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.015em;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+}
