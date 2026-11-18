@@ -46,6 +46,88 @@ function fitText(
   return `${trimmed}…`;
 }
 
+function splitIntoLines(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+): string[] {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [];
+  const lines: string[] = [];
+  let current = words[0];
+
+  for (let i = 1; i < words.length; i++) {
+    const candidate = `${current} ${words[i]}`;
+    if (ctx.measureText(candidate).width <= maxWidth) {
+      current = candidate;
+    } else {
+      lines.push(current);
+      current = words[i];
+    }
+  }
+  lines.push(current);
+  return lines;
+}
+
+function drawCellText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  textX: number,
+  centerY: number,
+  maxWidth: number,
+  weight: string,
+  baseSize: number,
+  allowWrap: boolean
+): void {
+  if (!text) return;
+
+  ctx.font = `${weight} ${baseSize}px ${BN_FONT}`;
+  if (ctx.measureText(text).width <= maxWidth) {
+    ctx.fillText(text, textX, centerY + 1);
+    return;
+  }
+
+  if (allowWrap) {
+    const candidateSizes = [22, 20, 18, 16];
+    for (const fontSize of candidateSizes) {
+      ctx.font = `${weight} ${fontSize}px ${BN_FONT}`;
+      const lines = splitIntoLines(ctx, text, maxWidth);
+      if (lines.length <= 2 && lines.every((l) => ctx.measureText(l).width <= maxWidth)) {
+        const step = fontSize + 5;
+        if (lines.length === 1) {
+          ctx.fillText(lines[0], textX, centerY + 1);
+        } else {
+          ctx.fillText(lines[0], textX, centerY - step / 2 + 1);
+          ctx.fillText(lines[1], textX, centerY + step / 2 + 1);
+        }
+        return;
+      }
+    }
+
+    // Fallback for 3+ lines or unspaced long strings: wrap at 17px up to 2 lines
+    ctx.font = `${weight} 17px ${BN_FONT}`;
+    const lines = splitIntoLines(ctx, text, maxWidth);
+    if (lines.length >= 2) {
+      const step = 22;
+      const line1 = fitText(ctx, lines[0], maxWidth);
+      const line2 = fitText(ctx, lines.slice(1).join(' '), maxWidth);
+      ctx.fillText(line1, textX, centerY - step / 2 + 1);
+      ctx.fillText(line2, textX, centerY + step / 2 + 1);
+      return;
+    }
+  } else {
+    for (const fontSize of [23, 21, 19]) {
+      ctx.font = `${weight} ${fontSize}px ${BN_FONT}`;
+      if (ctx.measureText(text).width <= maxWidth) {
+        ctx.fillText(text, textX, centerY + 1);
+        return;
+      }
+    }
+  }
+
+  ctx.fillText(fitText(ctx, text, maxWidth), textX, centerY + 1);
+}
+
 export function triggerPdfDownload(blob: Blob, fileName: string): string {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -105,29 +187,30 @@ export async function generateHalkhataLedgerPdf(options: {
     align: 'left' | 'center' | 'right';
     headerBg: string;
     cellBg?: string;
+    allowWrap?: boolean;
   }
 
   const cols: ColDef[] = includeRemaining
     ? [
-        { label: 'নং', width: 64, align: 'center', headerBg: '#064e3b' },
-        { label: 'পৃষ্ঠা', width: 84, align: 'center', headerBg: '#064e3b' },
-        { label: 'নাম', width: 332, align: 'left', headerBg: '#064e3b' },
-        { label: 'ঠিকানা', width: 150, align: 'left', headerBg: '#064e3b' },
-        { label: 'মোবাইল', width: 240, align: 'left', headerBg: '#064e3b' },
-        { label: 'টাকা', width: 170, align: 'right', headerBg: '#312e81', cellBg: '#eef2ff' },
-        { label: 'জমা নগদ', width: 165, align: 'right', headerBg: '#047857', cellBg: '#ecfdf5' },
-        { label: 'জমা ব্যাংক', width: 170, align: 'right', headerBg: '#075985', cellBg: '#f0f9ff' },
-        { label: 'বাকি', width: 175, align: 'right', headerBg: '#9f1239', cellBg: '#fff1f2' },
+        { label: 'নং', width: 54, align: 'center', headerBg: '#064e3b' },
+        { label: 'পৃষ্ঠা', width: 70, align: 'center', headerBg: '#064e3b' },
+        { label: 'নাম', width: 430, align: 'left', headerBg: '#064e3b', allowWrap: true },
+        { label: 'ঠিকানা', width: 196, align: 'left', headerBg: '#064e3b', allowWrap: true },
+        { label: 'মোবাইল', width: 195, align: 'left', headerBg: '#064e3b' },
+        { label: 'টাকা', width: 155, align: 'right', headerBg: '#312e81', cellBg: '#eef2ff' },
+        { label: 'জমা নগদ', width: 148, align: 'right', headerBg: '#047857', cellBg: '#ecfdf5' },
+        { label: 'জমা ব্যাংক', width: 150, align: 'right', headerBg: '#075985', cellBg: '#f0f9ff' },
+        { label: 'বাকি', width: 152, align: 'right', headerBg: '#9f1239', cellBg: '#fff1f2' },
       ]
     : [
-        { label: 'নং', width: 68, align: 'center', headerBg: '#064e3b' },
-        { label: 'পৃষ্ঠা', width: 90, align: 'center', headerBg: '#064e3b' },
-        { label: 'নাম', width: 374, align: 'left', headerBg: '#064e3b' },
-        { label: 'ঠিকানা', width: 170, align: 'left', headerBg: '#064e3b' },
-        { label: 'মোবাইল', width: 258, align: 'left', headerBg: '#064e3b' },
-        { label: 'টাকা', width: 190, align: 'right', headerBg: '#312e81', cellBg: '#eef2ff' },
-        { label: 'জমা নগদ', width: 200, align: 'right', headerBg: '#047857', cellBg: '#ecfdf5' },
-        { label: 'জমা ব্যাংক', width: 200, align: 'right', headerBg: '#075985', cellBg: '#f0f9ff' },
+        { label: 'নং', width: 58, align: 'center', headerBg: '#064e3b' },
+        { label: 'পৃষ্ঠা', width: 76, align: 'center', headerBg: '#064e3b' },
+        { label: 'নাম', width: 466, align: 'left', headerBg: '#064e3b', allowWrap: true },
+        { label: 'ঠিকানা', width: 210, align: 'left', headerBg: '#064e3b', allowWrap: true },
+        { label: 'মোবাইল', width: 210, align: 'left', headerBg: '#064e3b' },
+        { label: 'টাকা', width: 180, align: 'right', headerBg: '#312e81', cellBg: '#eef2ff' },
+        { label: 'জমা নগদ', width: 175, align: 'right', headerBg: '#047857', cellBg: '#ecfdf5' },
+        { label: 'জমা ব্যাংক', width: 175, align: 'right', headerBg: '#075985', cellBg: '#f0f9ff' },
       ];
 
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -314,16 +397,23 @@ export async function generateHalkhataLedgerPdf(options: {
           }
           const cell = cells[colIdx];
           ctx.fillStyle = cell.color;
-          ctx.font = `${cell.bold ? '700' : '600'} ${cell.size ?? 25}px ${BN_FONT}`;
           ctx.textAlign = col.align;
           const textX =
             col.align === 'center'
               ? cx + col.width / 2
               : col.align === 'right'
-              ? cx + col.width - 12
-              : cx + 12;
-          const fitted = fitText(ctx, cell.text, col.width - 20);
-          ctx.fillText(fitted, textX, y + ROW_H / 2 + 1);
+              ? cx + col.width - 10
+              : cx + 10;
+          drawCellText(
+            ctx,
+            cell.text,
+            textX,
+            y + ROW_H / 2,
+            col.width - 18,
+            cell.bold ? '700' : '600',
+            cell.size ?? 25,
+            Boolean(col.allowWrap)
+          );
           cx += col.width;
         });
 

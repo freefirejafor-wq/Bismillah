@@ -119,10 +119,10 @@ export function LedgerTable({
               <th className="py-3 px-2.5 text-center w-16 bg-emerald-900 border-r border-emerald-700/70 whitespace-nowrap">
                 পৃষ্ঠা
               </th>
-              <th className="py-3 px-3 text-left min-w-[165px] bg-emerald-900 border-r border-emerald-700/70 whitespace-nowrap">
+              <th className="py-3 px-3 text-left min-w-[220px] bg-emerald-900 border-r border-emerald-700/70 whitespace-nowrap">
                 নাম
               </th>
-              <th className="py-3 px-3 text-left min-w-[105px] bg-emerald-900 border-r border-emerald-700/70 whitespace-nowrap">
+              <th className="py-3 px-3 text-left min-w-[130px] bg-emerald-900 border-r border-emerald-700/70 whitespace-nowrap">
                 ঠিকানা
               </th>
               <th className="py-3 px-3 text-left min-w-[120px] bg-emerald-900 border-r border-emerald-700/70 whitespace-nowrap">
@@ -172,7 +172,7 @@ export function LedgerTable({
                       </div>
                     )}
                   </td>
-                  <td className="py-2.5 px-3 text-slate-700 font-medium border-r border-slate-200 whitespace-nowrap">
+                  <td className="py-2.5 px-3 text-slate-700 font-medium border-r border-slate-200 leading-snug">
                     {c.address || '—'}
                   </td>
                   <td className="py-2.5 px-3 text-slate-800 font-medium font-mono-num border-r border-slate-200 whitespace-nowrap">
