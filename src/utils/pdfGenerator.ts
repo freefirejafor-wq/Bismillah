@@ -154,7 +154,7 @@ export async function generateHalkhataLedgerPdf(options: {
 
   const { customers, shop, halkhata, printMode, showRemainingCol, onlyPageIndex } = options;
   const fmt = shop.numeralFormat;
-  const includeRemaining = printMode === 'filled' && showRemainingCol;
+  const includeRemaining = showRemainingCol;
 
   // A4 at 200 DPI: 1654 x 2339
   const PAGE_W = 1654;
@@ -162,7 +162,7 @@ export async function generateHalkhataLedgerPdf(options: {
   const MARGIN_X = 52;
   const MARGIN_TOP = 54;
   const CONTENT_W = PAGE_W - MARGIN_X * 2; // 1550
-  const ROWS_PER_PAGE = 22;
+  const ROWS_PER_PAGE = 18;
 
   const chunks: Customer[][] = [];
   for (let i = 0; i < customers.length; i += ROWS_PER_PAGE) {
@@ -192,25 +192,25 @@ export async function generateHalkhataLedgerPdf(options: {
 
   const cols: ColDef[] = includeRemaining
     ? [
-        { label: 'নং', width: 54, align: 'center', headerBg: '#064e3b' },
-        { label: 'পৃষ্ঠা', width: 70, align: 'center', headerBg: '#064e3b' },
-        { label: 'নাম', width: 430, align: 'left', headerBg: '#064e3b', allowWrap: true },
-        { label: 'ঠিকানা', width: 196, align: 'left', headerBg: '#064e3b', allowWrap: true },
-        { label: 'মোবাইল', width: 195, align: 'left', headerBg: '#064e3b' },
-        { label: 'টাকা', width: 155, align: 'right', headerBg: '#312e81', cellBg: '#eef2ff' },
-        { label: 'জমা নগদ', width: 148, align: 'right', headerBg: '#047857', cellBg: '#ecfdf5' },
-        { label: 'জমা ব্যাংক', width: 150, align: 'right', headerBg: '#075985', cellBg: '#f0f9ff' },
-        { label: 'বাকি', width: 152, align: 'right', headerBg: '#9f1239', cellBg: '#fff1f2' },
+        { label: 'নং', width: 50, align: 'center', headerBg: '#064e3b' },
+        { label: 'পৃষ্ঠা', width: 64, align: 'center', headerBg: '#064e3b' },
+        { label: 'নাম', width: 366, align: 'left', headerBg: '#064e3b', allowWrap: true },
+        { label: 'ঠিকানা', width: 164, align: 'left', headerBg: '#064e3b', allowWrap: true },
+        { label: 'মোবাইল', width: 178, align: 'left', headerBg: '#064e3b' },
+        { label: 'টাকা', width: 150, align: 'right', headerBg: '#312e81', cellBg: '#eef2ff' },
+        { label: 'জমা নগদ', width: 180, align: 'right', headerBg: '#047857', cellBg: '#ecfdf5' },
+        { label: 'জমা ব্যাংক', width: 178, align: 'right', headerBg: '#075985', cellBg: '#f0f9ff' },
+        { label: 'বাকি', width: 220, align: 'right', headerBg: '#9f1239', cellBg: '#fff1f2' },
       ]
     : [
-        { label: 'নং', width: 58, align: 'center', headerBg: '#064e3b' },
-        { label: 'পৃষ্ঠা', width: 76, align: 'center', headerBg: '#064e3b' },
-        { label: 'নাম', width: 466, align: 'left', headerBg: '#064e3b', allowWrap: true },
-        { label: 'ঠিকানা', width: 210, align: 'left', headerBg: '#064e3b', allowWrap: true },
-        { label: 'মোবাইল', width: 210, align: 'left', headerBg: '#064e3b' },
-        { label: 'টাকা', width: 180, align: 'right', headerBg: '#312e81', cellBg: '#eef2ff' },
-        { label: 'জমা নগদ', width: 175, align: 'right', headerBg: '#047857', cellBg: '#ecfdf5' },
-        { label: 'জমা ব্যাংক', width: 175, align: 'right', headerBg: '#075985', cellBg: '#f0f9ff' },
+        { label: 'নং', width: 50, align: 'center', headerBg: '#064e3b' },
+        { label: 'পৃষ্ঠা', width: 64, align: 'center', headerBg: '#064e3b' },
+        { label: 'নাম', width: 416, align: 'left', headerBg: '#064e3b', allowWrap: true },
+        { label: 'ঠিকানা', width: 186, align: 'left', headerBg: '#064e3b', allowWrap: true },
+        { label: 'মোবাইল', width: 184, align: 'left', headerBg: '#064e3b' },
+        { label: 'টাকা', width: 160, align: 'right', headerBg: '#312e81', cellBg: '#eef2ff' },
+        { label: 'জমা নগদ', width: 245, align: 'right', headerBg: '#047857', cellBg: '#ecfdf5' },
+        { label: 'জমা ব্যাংক', width: 245, align: 'right', headerBg: '#075985', cellBg: '#f0f9ff' },
       ];
 
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -328,8 +328,8 @@ export async function generateHalkhataLedgerPdf(options: {
 
     y += HEADER_H;
 
-    // Table Rows (22 rows per page)
-    const ROW_H = 78;
+    // Table Rows (18 rows per page, taller cells for handwriting)
+    const ROW_H = 98;
     if (pageRows.length === 0) {
       ctx.strokeStyle = '#334155';
       ctx.lineWidth = 1.6;
@@ -355,13 +355,12 @@ export async function generateHalkhataLedgerPdf(options: {
         ctx.lineWidth = 1.4;
         ctx.strokeRect(MARGIN_X, y, CONTENT_W, ROW_H);
 
-        const remaining = getRemainingBalance(c);
         const cells: Array<{ text: string; color: string; bold?: boolean; size?: number }> = [
           { text: formatSerial(c.serialNo, fmt), color: '#064e3b', bold: true, size: 25 },
           { text: c.pageNo ? formatNumberText(c.pageNo, fmt) : '—', color: '#334155', bold: true, size: 24 },
           { text: c.name, color: '#0f172a', bold: true, size: 25 },
           { text: c.address, color: '#1e293b', bold: false, size: 24 },
-          { text: c.mobile ? formatNumberText(c.mobile, fmt) : '—', color: '#0f172a', bold: true, size: 25 },
+          { text: c.mobile ? formatNumberText(c.mobile, fmt) : '—', color: '#0f172a', bold: true, size: 24 },
           { text: formatAmount(c.totalDue, fmt), color: '#1e1b4b', bold: true, size: 25 },
           {
             text: printMode === 'filled' && c.cashPaid > 0 ? formatAmount(c.cashPaid, fmt) : '',
@@ -378,8 +377,8 @@ export async function generateHalkhataLedgerPdf(options: {
         ];
         if (includeRemaining) {
           cells.push({
-            text: formatAmount(remaining, fmt),
-            color: remaining <= 0 ? '#047857' : '#be123c',
+            text: '',
+            color: '#be123c',
             bold: true,
             size: 25,
           });
@@ -454,7 +453,7 @@ export async function generateHalkhataLedgerPdf(options: {
       ];
       if (includeRemaining) {
         totalValues.push({
-          text: formatAmount(grandTotals.remaining, fmt),
+          text: '',
           color: '#fcd34d',
         });
       }
@@ -469,9 +468,17 @@ export async function generateHalkhataLedgerPdf(options: {
 
         const tv = totalValues[i];
         ctx.fillStyle = tv.color;
-        ctx.font = `700 25px ${BN_FONT}`;
         ctx.textAlign = 'right';
-        ctx.fillText(fitText(ctx, tv.text, col.width - 18), tx + col.width - 12, y + TOTAL_H / 2 + 1);
+        drawCellText(
+          ctx,
+          tv.text,
+          tx + col.width - 12,
+          y + TOTAL_H / 2,
+          col.width - 20,
+          '700',
+          25,
+          false
+        );
         tx += col.width;
       });
     }

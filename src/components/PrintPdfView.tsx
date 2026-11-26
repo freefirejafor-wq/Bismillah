@@ -21,7 +21,7 @@ interface PrintPdfViewProps {
 type PrintMode = 'filled' | 'blank_deposit';
 type RowFilter = 'all' | 'unpaid_only';
 
-const ROWS_PER_PAGE = 22;
+const ROWS_PER_PAGE = 18;
 
 export function PrintPdfView({ customers, shop, halkhata }: PrintPdfViewProps) {
   const [printMode, setPrintMode] = useState<PrintMode>('filled');
@@ -258,17 +258,15 @@ export function PrintPdfView({ customers, shop, halkhata }: PrintPdfViewProps) {
             </select>
           </div>
 
-          {printMode === 'filled' && (
-            <label className="flex items-center gap-2 text-slate-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showRemainingCol}
-                onChange={(e) => setShowRemainingCol(e.target.checked)}
-                className="rounded border-slate-300 text-emerald-700"
-              />
-              <span>&quot;অবশিষ্ট বাকি&quot; কলাম দেখান</span>
-            </label>
-          )}
+          <label className="flex items-center gap-2 text-slate-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showRemainingCol}
+              onChange={(e) => setShowRemainingCol(e.target.checked)}
+              className="rounded border-slate-300 text-emerald-700"
+            />
+            <span>&quot;অবশিষ্ট বাকি&quot; কলাম দেখান</span>
+          </label>
         </div>
       </div>
 
@@ -339,8 +337,8 @@ export function PrintPdfView({ customers, shop, halkhata }: PrintPdfViewProps) {
                     <th className="border border-slate-700 bg-indigo-900 py-2 px-2 text-right w-24">টাকা</th>
                     <th className="border border-slate-700 bg-emerald-700 py-2 px-2 text-right w-24">জমা নগদ</th>
                     <th className="border border-slate-700 bg-sky-800 py-2 px-2 text-right w-24">জমা ব্যাংক</th>
-                    {printMode === 'filled' && showRemainingCol && (
-                      <th className="border border-slate-700 bg-rose-800 py-2 px-2 text-right w-24">বাকি</th>
+                    {showRemainingCol && (
+                      <th className="border border-slate-700 bg-rose-800 py-2 px-2 text-right w-28">বাকি</th>
                     )}
                   </tr>
                 </thead>
@@ -348,7 +346,7 @@ export function PrintPdfView({ customers, shop, halkhata }: PrintPdfViewProps) {
                   {pageRows.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={printMode === 'filled' && showRemainingCol ? 9 : 8}
+                        colSpan={showRemainingCol ? 9 : 8}
                         className="border border-slate-700 py-8 text-center text-slate-500"
                       >
                         কোনো কাস্টমার তথ্য নেই
@@ -383,13 +381,13 @@ export function PrintPdfView({ customers, shop, halkhata }: PrintPdfViewProps) {
                               ? formatAmount(c.bankPaid, fmt)
                               : ''}
                           </td>
-                          {printMode === 'filled' && showRemainingCol && (
+                          {showRemainingCol && (
                             <td
                               className={`border border-slate-400 px-2 py-1 text-right font-mono-num font-bold bg-rose-50/70 ${
                                 remaining <= 0 ? 'text-emerald-700' : 'text-rose-700'
                               }`}
                             >
-                              {formatAmount(remaining, fmt)}
+                              {printMode === 'filled' ? formatAmount(remaining, fmt) : ''}
                             </td>
                           )}
                         </tr>
@@ -416,9 +414,9 @@ export function PrintPdfView({ customers, shop, halkhata }: PrintPdfViewProps) {
                           ? formatAmount(grandTotals.bankPaid, fmt)
                           : ''}
                       </td>
-                      {printMode === 'filled' && showRemainingCol && (
+                      {showRemainingCol && (
                         <td className="border border-slate-700 px-2 py-2 text-right font-mono-num text-amber-300">
-                          {formatAmount(grandTotals.remaining, fmt)}
+                          {printMode === 'filled' ? formatAmount(grandTotals.remaining, fmt) : ''}
                         </td>
                       )}
                     </tr>
