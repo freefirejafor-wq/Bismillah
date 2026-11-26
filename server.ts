@@ -4,8 +4,8 @@ import path from 'node:path';
 import express from 'express';
 import { GoogleGenAI, Type } from '@google/genai';
 
-const PORT = Number(process.env.PORT) || 3000;
 const isProd = process.env.NODE_ENV === 'production';
+const PORT = isProd ? Number(process.env.PORT) || 3000 : 3000;
 
 function getGeminiClient() {
   const apiKey = process.env.GEMINI_API_KEY;

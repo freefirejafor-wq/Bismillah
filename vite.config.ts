@@ -26,6 +26,9 @@ export default defineConfig(() => {
           short_name: 'হালখাতা',
           description:
             'দোকানের হালখাতা, কাস্টমারের বকেয়া ও নগদ/ব্যাংক জমার হিসাব, WhatsApp তাগাদা এবং রঙিন A4 PDF প্রিন্ট সিস্টেম।',
+          lang: 'bn',
+          dir: 'ltr',
+          categories: ['business', 'finance', 'productivity'],
           theme_color: '#064e3b',
           background_color: '#ecfdf5',
           display: 'standalone',
@@ -103,8 +106,8 @@ export default defineConfig(() => {
           if (error) {
             return;
           }
-          const distDir = path.resolve(__dirname, 'dist');
-          const srcAssets = path.resolve(__dirname, 'src/assets');
+          const distDir = path.resolve(import.meta.dirname, 'dist');
+          const srcAssets = path.resolve(import.meta.dirname, 'src/assets');
           const distAssets = path.resolve(distDir, 'src/assets');
           if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
             fs.cpSync(srcAssets, distAssets, {recursive: true, force: true});
@@ -114,7 +117,7 @@ export default defineConfig(() => {
     ],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(import.meta.dirname, '.'),
       },
     },
     server: {
