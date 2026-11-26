@@ -23,8 +23,10 @@ import {
 import { AuthGate } from './components/AuthGate.tsx';
 import { CustomerModal } from './components/CustomerModal.tsx';
 import { LedgerTable } from './components/LedgerTable.tsx';
+import { OfflineIndicator } from './components/OfflineIndicator.tsx';
 import { PaymentModal } from './components/PaymentModal.tsx';
 import { PrintPdfView } from './components/PrintPdfView.tsx';
+import { PWAInstallButton } from './components/PWAInstallButton.tsx';
 import { ReceiptModal } from './components/ReceiptModal.tsx';
 import { ShopOnboarding } from './components/ShopOnboarding.tsx';
 import { ShopSettingsModal } from './components/ShopSettingsModal.tsx';
@@ -917,6 +919,7 @@ export default function App() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+            <PWAInstallButton />
             <button
               type="button"
               onClick={handleToggleNumeralFormat}
@@ -1155,6 +1158,7 @@ export default function App() {
           </div>
         </div>
       )}
+      <OfflineIndicator />
     </div>
   );
 }
